@@ -1,0 +1,605 @@
+# 🚀 Difference Array (Range Update Technique)
+
+> **One of the most important array techniques for interviews.**
+>
+> Use it whenever the problem asks:
+>
+> - Perform **many range updates**
+> - Add/subtract a value on an interval `[l, r]`
+> - Apply multiple operations, then print the final array
+
+---
+
+# 📌 Problem Motivation
+
+Suppose
+
+```text
+arr = [0,0,0,0,0]
+```
+
+Operations
+
+```text
+Add +2 to indices [1,3]
+
+Add +3 to indices [2,4]
+
+Add -1 to indices [0,2]
+```
+
+Naive solution
+
+```text
+for every operation
+    update every element in range
+```
+
+Time Complexity
+
+```text
+O(Q × N)
+```
+
+If
+
+```text
+N = 10^5
+Q = 10^5
+```
+
+then
+
+```text
+10^10
+```
+
+operations ❌
+
+Too slow.
+
+---
+
+# 💡 Main Intuition
+
+Instead of updating **every element**,
+
+update only
+
+- where the effect **starts**
+- where the effect **stops**
+
+Think of pouring water.
+
+```
+Normal Update
+
+0 0 0 0 0
+
++5 on [1,3]
+
+0 5 5 5 0
+```
+
+Instead of filling every bucket,
+
+just place
+
+```
++5 at start
+
+-5 after end
+```
+
+```
+0  +5  0  0  -5
+```
+
+Later,
+
+take prefix sum.
+
+The +5 automatically flows forward.
+
+---
+
+# 📌 Difference Array Concept
+
+Suppose
+
+```text
+arr
+
+5 8 10 7 6
+```
+
+Difference array
+
+```text
+diff[0] = arr[0]
+
+diff[i] = arr[i]-arr[i-1]
+```
+
+Example
+
+```
+arr
+
+5 8 10 7 6
+
+diff
+
+5 3 2 -3 -1
+```
+
+Notice
+
+```
+5
+
+5+3=8
+
+8+2=10
+
+10-3=7
+
+7-1=6
+```
+
+Prefix sum reconstructs original array.
+
+---
+
+# ⭐ Important Observation
+
+Difference array stores
+
+> **How much value changes at every index.**
+
+Not the actual values.
+
+---
+
+# Range Update
+
+Suppose
+
+```
+Add +5 on [2,5]
+```
+
+Instead of
+
+```
+0 0 5 5 5 5 0 0
+```
+
+Store
+
+```
+Index
+
+0 1 2 3 4 5 6 7
+
+Diff
+
+0 0 +5 0 0 0 -5 0
+```
+
+Meaning
+
+```
+Start adding +5 here
+
+↓
+
+Stop adding after index 5
+```
+
+---
+
+# Algorithm
+
+For every update
+
+```
+(l,r,val)
+```
+
+Do
+
+```python
+diff[l] += val
+
+if r+1 < n:
+    diff[r+1] -= val
+```
+
+After processing all updates,
+
+take prefix sum.
+
+---
+
+# Why Does This Work?
+
+Suppose
+
+```
++10 on [1,4]
+```
+
+Difference array
+
+```
+0 10 0 0 0 -10
+```
+
+Prefix
+
+```
+0
+
+10
+
+10
+
+10
+
+10
+
+0
+```
+
+Exactly what we wanted.
+
+---
+
+# Dry Run
+
+Initial
+
+```text
+arr
+
+0 0 0 0 0
+```
+
+Difference
+
+```text
+0 0 0 0 0
+```
+
+---
+
+## Update 1
+
+```
++2 on [1,3]
+```
+
+Do
+
+```text
+diff[1]+=2
+
+diff[4]-=2
+```
+
+Difference
+
+```
+0 2 0 0 -2
+```
+
+---
+
+## Update 2
+
+```
++3 on [2,4]
+```
+
+Do
+
+```
+diff[2]+=3
+```
+
+No subtraction because
+
+```
+r+1=5
+
+outside array
+```
+
+Difference
+
+```
+0 2 3 0 -2
+```
+
+---
+
+## Update 3
+
+```
+-1 on [0,2]
+```
+
+Do
+
+```
+diff[0]-=1
+
+diff[3]+=1
+```
+
+Difference
+
+```
+-1 2 3 1 -2
+```
+
+---
+
+# Build Final Array
+
+Take prefix sum.
+
+```
+Index
+
+0
+
+Value
+
+-1
+```
+
+```
+Index
+
+1
+
+-1+2=1
+```
+
+```
+Index
+
+2
+
+1+3=4
+```
+
+```
+Index
+
+3
+
+4+1=5
+```
+
+```
+Index
+
+4
+
+5-2=3
+```
+
+Final
+
+```
+[-1,1,4,5,3]
+```
+
+Verify manually
+
+```
+Initial
+
+0 0 0 0 0
+
+Update1
+
+0 2 2 2 0
+
+Update2
+
+0 2 5 5 3
+
+Update3
+
+-1 1 4 5 3
+```
+
+Correct ✅
+
+---
+
+# Python Code
+
+```python
+def range_update(n, queries):
+
+    diff = [0] * n
+
+    for l, r, val in queries:
+
+        diff[l] += val
+
+        if r + 1 < n:
+            diff[r + 1] -= val
+
+    arr = [0] * n
+
+    arr[0] = diff[0]
+
+    for i in range(1, n):
+        arr[i] = arr[i - 1] + diff[i]
+
+    return arr
+
+
+queries = [
+    (1, 3, 2),
+    (2, 4, 3),
+    (0, 2, -1)
+]
+
+print(range_update(5, queries))
+```
+
+Output
+
+```
+[-1,1,4,5,3]
+```
+
+---
+
+# Time Complexity
+
+Naive
+
+```
+Q × N
+```
+
+Difference Array
+
+```
+Range Updates
+
+O(Q)
+
++
+
+Prefix Sum
+
+O(N)
+
+=
+
+O(N+Q)
+```
+
+Huge improvement.
+
+---
+
+# When Should You Think of Difference Array?
+
+Whenever you hear
+
+- Add value to every element in a range
+- Increment interval
+- Decrement interval
+- Multiple range updates
+- Process all queries first, print final array
+
+Immediately think
+
+```
+Difference Array
+```
+
+---
+
+# Difference Array vs Prefix Sum
+
+| Prefix Sum | Difference Array |
+|------------|------------------|
+| Fast **Range Queries** | Fast **Range Updates** |
+| Query = O(1) | Update = O(1) |
+| Build = O(N) | Build = O(N) |
+| Uses cumulative sums | Uses start/stop markers |
+
+---
+
+# Memory Trick 🎯
+
+### Prefix Sum
+
+> **"I already know everything before me."**
+
+```
+prefix[i]
+
+=
+
+sum till i
+```
+
+Used to answer
+
+```
+Range Sum Queries
+```
+
+---
+
+### Difference Array
+
+> **"I only remember where change starts and where it ends."**
+
+```
+diff[l]+=x
+
+diff[r+1]-=x
+```
+
+Used for
+
+```
+Range Updates
+```
+
+---
+
+# Interview Pattern Recognition
+
+If a question says:
+
+> Perform **many updates** on intervals and then output the final array.
+
+Don't update every element.
+
+Think:
+
+```
+Difference Array
+
+↓
+
+Mark Start
+
+↓
+
+Mark End
+
+↓
+
+One Prefix Sum
+
+↓
+
+Final Array
+```
+
+---
+
+# ⭐ Golden Observation
+
+Difference Array is the **inverse of Prefix Sum**.
+
+- **Prefix Sum** answers many **range queries** efficiently.
+- **Difference Array** performs many **range updates** efficiently.
+
+
+Both rely on a single prefix-sum pass, but they optimize opposite operations.
